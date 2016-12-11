@@ -260,14 +260,39 @@ class GrlArteSource : Grl.Source
         }
     }
 
-    /*public override void search (Grl.SourceSearchSpec ss)
+    public override void search (Grl.SourceSearchSpec ss)
     {
-        debug ("Search...");
+        debug ("Searching '%s'...", ss.text);
+
+        SourceArteSpec ars = SourceArteSpec() {
+            source = ss.source,
+            operation_id = ss.operation_id,
+            container = null,
+            text = ss.text,
+            callback = ss.callback
+        };
+        arte_browse(ars);
         // TODO implement
-        ss.callback(ss.source, ss.operation_id, null, 0, null);
+        //ss.callback(ss.source, ss.operation_id, null, 0, null);
         debug ("Search finished");
     }
-    */
+
+    private void filter_videos (ref unowned SList<Video> videos, string text)
+    {
+        debug ("FILTERING");
+        // Manual copy
+        SList<Video> work_videos = new GLib.SList<Video> ();
+        foreach (Video v in videos) {
+            work_videos.append(v);
+        }
+
+        foreach (Video v in work_videos) {
+            if (v.title != text) {
+                debug ("excluding %s...", v.title);
+                videos.remove(v);
+            }
+        }
+    }
 
     private void refresh_rss_feed (SourceArteSpec ars)
     {
@@ -293,6 +318,11 @@ class GrlArteSource : Grl.Source
                 try {
                     // parse
                     unowned GLib.SList<Video> videos = p.parse (language);
+
+                    if (ars.text != null)
+                    {
+                        filter_videos(ref videos, ars.text);
+                    }
 
                     uint remaining = videos.length();
                     // Create the "Change language" box
